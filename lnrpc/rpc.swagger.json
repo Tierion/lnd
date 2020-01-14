@@ -49,6 +49,40 @@
         ]
       }
     },
+    "/v1/block": {
+      "get": {
+        "summary": "*\nGetBlock returns a block from ChainIO",
+        "operationId": "GetBlock",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/lnrpcBlockDetails"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "block_hash",
+            "description": "/ The hash of the block.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "block_height",
+            "description": "/ The height of the block.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Lightning"
+        ]
+      }
+    },
     "/v1/changepassword": {
       "post": {
         "summary": "* lncli: `changepassword`\nChangePassword changes the password of the encrypted wallet. This will\nautomatically unlock the wallet database if successful.",
@@ -1151,6 +1185,32 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "txid",
+            "description": "/ The transaction id.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "num_confirmations",
+            "description": "/ The number of confirmations.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "block_height",
+            "description": "/ The height of the block this transaction was included in.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
         "tags": [
           "Lightning"
         ]
@@ -1511,6 +1571,57 @@
       "default": "WITNESS_PUBKEY_HASH",
       "description": "- `p2wkh`: Pay to witness key hash (`WITNESS_PUBKEY_HASH` = 0)\n- `np2wkh`: Pay to nested witness key hash (`NESTED_PUBKEY_HASH` = 1)",
       "title": "* \n`AddressType` has to be one of:"
+    },
+    "lnrpcBlockDetails": {
+      "type": "object",
+      "properties": {
+        "block_hash": {
+          "type": "string",
+          "title": "/ The hash of the block"
+        },
+        "block_height": {
+          "type": "integer",
+          "format": "int64",
+          "title": "/ The height of the block"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Version of the block.  This is not the same as the protocol version."
+        },
+        "prev_block": {
+          "type": "string",
+          "format": "byte",
+          "description": "Hash of the previous block header in the block chain."
+        },
+        "merkle_root": {
+          "type": "string",
+          "format": "byte",
+          "description": "Merkle tree reference to hash of all transactions for the block."
+        },
+        "timestamp": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Time the block was created."
+        },
+        "bits": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Difficulty target for the block."
+        },
+        "nonce": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Nonce used to generate the block."
+        },
+        "transactions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "/ The list of transactions relevant to the wallet."
+        }
+      }
     },
     "lnrpcChain": {
       "type": "object",
