@@ -3684,7 +3684,7 @@ func (r *rpcServer) SubscribeTransactions(req *lnrpc.GetTransactionsRequest,
 // GetTransactions returns a list of describing all the known transactions
 // relevant to the wallet.
 func (r *rpcServer) GetTransactions(ctx context.Context,
-	_ *lnrpc.GetTransactionsRequest) (*lnrpc.TransactionDetails, error) {
+	req *lnrpc.GetTransactionsRequest) (*lnrpc.TransactionDetails, error) {
 
 	// TODO(roasbeef): add pagination support
 	transactions, err := r.server.cc.wallet.ListTransactionDetails()
@@ -3693,9 +3693,15 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	}
 
 	txDetails := &lnrpc.TransactionDetails{
-		Transactions: make([]*lnrpc.Transaction, len(transactions)),
+		Transactions: make([]*lnrpc.Transaction, 0),
 	}
-	for i, tx := range transactions {
+	for _, tx := range transactions {
+		if req.BlockHeight != 0 && req.BlockHeight != tx.BlockHeight{
+			continue
+		}
+		if tx.NumConfirmations != 0 && tx.NumConfirmations < req.NumConfirmations {
+			continue
+		}
 		var destAddresses []string
 		for _, destAddress := range tx.DestAddresses {
 			destAddresses = append(destAddresses, destAddress.EncodeAddress())
@@ -3708,7 +3714,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			blockHash = tx.BlockHash.String()
 		}
 
-		txDetails.Transactions[i] = &lnrpc.Transaction{
+		txDetails.Transactions = append(txDetails.Transactions, &lnrpc.Transaction{
 			TxHash:           tx.Hash.String(),
 			Amount:           int64(tx.Value),
 			NumConfirmations: tx.NumConfirmations,
@@ -3718,10 +3724,58 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			TotalFees:        tx.TotalFees,
 			DestAddresses:    destAddresses,
 			RawTxHex:         hex.EncodeToString(tx.RawTx),
+		})
+		fmt.Printf("%x vs %x\n", tx.Hash.CloneBytes(), req.Txid)
+		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) == 0 {
+			break
 		}
 	}
 
 	return txDetails, nil
+}
+
+// GetBLock returns a list of describing all the known transactions
+// relevant to the Wallet.
+func (r *rpcServer) GetBlock(ctx context.Context,
+	req *lnrpc.GetBlockRequest) (*lnrpc.BlockDetails, error) {
+	var hash *chainhash.Hash
+	var err error
+	if req.BlockHash != "" {
+		hash, err = chainhash.NewHashFromStr(req.BlockHash)
+	} else if req.BlockHeight != 0{
+		hash, err = r.server.cc.chainIO.GetBlockHash(int64(req.BlockHeight))
+	} else{
+		return nil, errors.New("block_hash or block_height not provided")
+	}
+	if err != nil {
+		return nil, err
+	}
+	block, err := r.server.cc.chainIO.GetBlock(hash)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	blockWithHeight, err := r.server.cc.chainView.FilterBlock(hash)
+	txDetails := make([]string, len(block.Transactions))
+	for i, tx := range block.Transactions{
+		txHash := tx.TxHash().String()
+		txDetails[i] = txHash
+	}
+	blockDetail := lnrpc.BlockDetails{
+		BlockHash: hash.String(),
+		BlockHeight: blockWithHeight.Height,
+		Version: block.Header.Version,
+		PrevBlock: block.Header.PrevBlock.CloneBytes(),
+		MerkleRoot: block.Header.MerkleRoot.CloneBytes(),
+		Timestamp: uint32(block.Header.Timestamp.Unix()),
+		Bits: block.Header.Bits,
+		Nonce: block.Header.Nonce,
+		Transactions: txDetails,
+	}
+
+	return &blockDetail, nil
 }
 
 // DescribeGraph returns a description of the latest graph state from the PoV
