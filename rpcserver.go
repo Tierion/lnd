@@ -3706,8 +3706,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		if tx.NumConfirmations != 0 && tx.NumConfirmations < req.NumConfirmations {
 			continue
 		}
-		fmt.Printf("TXDEBUG: %x vs %x\n", tx.Hash.CloneBytes(), req.Txid)
-		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) != 0 {
+		if len(req.Txid) != 0 && tx.Hash.String() != hex.EncodeToString(req.Txid[:]) {
 			continue
 		}
 		var destAddresses []string
