@@ -3718,7 +3718,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			blockHash = tx.BlockHash.String()
 		}
 
-		txDetails.Transactions = append(txDetails.Transactions, &lnrpc.Transaction{
+		txRecord := &lnrpc.Transaction{
 			TxHash:           tx.Hash.String(),
 			Amount:           int64(tx.Value),
 			NumConfirmations: tx.NumConfirmations,
@@ -3728,11 +3728,13 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			TotalFees:        tx.TotalFees,
 			DestAddresses:    destAddresses,
 			RawTxHex:         hex.EncodeToString(tx.RawTx),
-		})
-		fmt.Printf("%x vs %x\n", tx.Hash.CloneBytes(), req.Txid)
-		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) == 0 {
-			break
 		}
+		txDetails.Transactions = append(txDetails.Transactions, txRecord)
+
+		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) == 0 {
+			txDetails.Transactions = []*lnrpc.Transaction{txRecord}
+			break
+		} 
 	}
 
 	return txDetails, nil
