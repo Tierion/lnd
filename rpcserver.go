@@ -3706,6 +3706,9 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		if tx.NumConfirmations != 0 && tx.NumConfirmations < req.NumConfirmations {
 			continue
 		}
+		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) != 0 {
+			continue
+		}
 		var destAddresses []string
 		for _, destAddress := range tx.DestAddresses {
 			destAddresses = append(destAddresses, destAddress.EncodeAddress())
@@ -3734,7 +3737,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) == 0 {
 			txDetails.Transactions = []*lnrpc.Transaction{txRecord}
 			break
-		} 
+		}
 	}
 
 	return txDetails, nil
