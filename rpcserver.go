@@ -313,6 +313,10 @@ func mainRPCServerPermissions() map[string][]bakery.Op {
 			Entity: "onchain",
 			Action: "read",
 		}},
+		"/lnrpc.Lightning/GetBlock": {{
+			Entity: "onchain",
+			Action: "read",
+		}},
 		"/lnrpc.Lightning/DescribeGraph": {{
 			Entity: "info",
 			Action: "read",
