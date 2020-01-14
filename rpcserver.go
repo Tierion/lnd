@@ -3733,8 +3733,9 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			RawTxHex:         hex.EncodeToString(tx.RawTx),
 		}
 		txDetails.Transactions = append(txDetails.Transactions, txRecord)
-
+		fmt.Printf("TXDEBUG: %x vs %x\n", tx.Hash.CloneBytes(), req.Txid)
 		if len(req.Txid) != 0 && bytes.Compare(tx.Hash.CloneBytes(), req.Txid) == 0 {
+			fmt.Printf("TXDEBUG: appended specific txid")
 			txDetails.Transactions = []*lnrpc.Transaction{txRecord}
 			break
 		}
