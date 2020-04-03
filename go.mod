@@ -8,10 +8,10 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
-	github.com/btcsuite/btcwallet v0.11.1-0.20200219004649-ae9416ad7623
+	github.com/btcsuite/btcwallet v0.11.1-0.20200331181045-60299130c647
 	github.com/btcsuite/btcwallet/wallet/txauthor v1.0.0
 	github.com/btcsuite/btcwallet/wallet/txrules v1.0.0
-	github.com/btcsuite/btcwallet/walletdb v1.2.0
+	github.com/btcsuite/btcwallet/walletdb v1.3.0
 	github.com/btcsuite/btcwallet/wtxmgr v1.0.0
 	github.com/btcsuite/fastsha256 v0.0.0-20160815193821-637e65642941
 	github.com/coreos/bbolt v1.3.3
@@ -63,5 +63,7 @@ replace github.com/lightningnetwork/lnd/queue => ./queue
 replace github.com/lightningnetwork/lnd/cert => ./cert
 
 replace git.schwanenlied.me/yawning/bsaes.git => github.com/Yawning/bsaes v0.0.0-20180720073208-c0276d75487e
+
+replace github.com/btcsuite/btcwallet/walletdb => github.com/btcsuite/btcwallet/walletdb v1.2.0
 
 go 1.12
