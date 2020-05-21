@@ -33,7 +33,7 @@ func (m *GetInfoRequest) Reset()         { *m = GetInfoRequest{} }
 func (m *GetInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*GetInfoRequest) ProtoMessage()    {}
 func (*GetInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_watchtower_0bd0ecbedde88a28, []int{0}
+	return fileDescriptor_watchtower_2ae1fbd0812d9297, []int{0}
 }
 func (m *GetInfoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetInfoRequest.Unmarshal(m, b)
@@ -69,7 +69,7 @@ func (m *GetInfoResponse) Reset()         { *m = GetInfoResponse{} }
 func (m *GetInfoResponse) String() string { return proto.CompactTextString(m) }
 func (*GetInfoResponse) ProtoMessage()    {}
 func (*GetInfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_watchtower_0bd0ecbedde88a28, []int{1}
+	return fileDescriptor_watchtower_2ae1fbd0812d9297, []int{1}
 }
 func (m *GetInfoResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetInfoResponse.Unmarshal(m, b)
@@ -129,7 +129,7 @@ const _ = grpc.SupportPackageIsVersion4
 type WatchtowerClient interface {
 	// * lncli: tower info
 	// GetInfo returns general information concerning the companion watchtower
-	// including it's public key and URIs where the server is currently
+	// including its public key and URIs where the server is currently
 	// listening for clients.
 	GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error)
 }
@@ -155,7 +155,7 @@ func (c *watchtowerClient) GetInfo(ctx context.Context, in *GetInfoRequest, opts
 type WatchtowerServer interface {
 	// * lncli: tower info
 	// GetInfo returns general information concerning the companion watchtower
-	// including it's public key and URIs where the server is currently
+	// including its public key and URIs where the server is currently
 	// listening for clients.
 	GetInfo(context.Context, *GetInfoRequest) (*GetInfoResponse, error)
 }
@@ -196,10 +196,10 @@ var _Watchtower_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("watchtowerrpc/watchtower.proto", fileDescriptor_watchtower_0bd0ecbedde88a28)
+	proto.RegisterFile("watchtowerrpc/watchtower.proto", fileDescriptor_watchtower_2ae1fbd0812d9297)
 }
 
-var fileDescriptor_watchtower_0bd0ecbedde88a28 = []byte{
+var fileDescriptor_watchtower_2ae1fbd0812d9297 = []byte{
 	// 213 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2b, 0x4f, 0x2c, 0x49,
 	0xce, 0x28, 0xc9, 0x2f, 0x4f, 0x2d, 0x2a, 0x2a, 0x48, 0xd6, 0x47, 0xf0, 0xf4, 0x0a, 0x8a, 0xf2,

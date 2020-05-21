@@ -37,7 +37,7 @@ func (m *KeyLocator) Reset()         { *m = KeyLocator{} }
 func (m *KeyLocator) String() string { return proto.CompactTextString(m) }
 func (*KeyLocator) ProtoMessage()    {}
 func (*KeyLocator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{0}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{0}
 }
 func (m *KeyLocator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyLocator.Unmarshal(m, b)
@@ -89,7 +89,7 @@ func (m *KeyDescriptor) Reset()         { *m = KeyDescriptor{} }
 func (m *KeyDescriptor) String() string { return proto.CompactTextString(m) }
 func (*KeyDescriptor) ProtoMessage()    {}
 func (*KeyDescriptor) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{1}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{1}
 }
 func (m *KeyDescriptor) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyDescriptor.Unmarshal(m, b)
@@ -137,7 +137,7 @@ func (m *TxOut) Reset()         { *m = TxOut{} }
 func (m *TxOut) String() string { return proto.CompactTextString(m) }
 func (*TxOut) ProtoMessage()    {}
 func (*TxOut) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{2}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{2}
 }
 func (m *TxOut) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TxOut.Unmarshal(m, b)
@@ -200,7 +200,8 @@ type SignDescriptor struct {
 	// only be populated if a p2wsh or a p2sh output is being signed.
 	WitnessScript []byte `protobuf:"bytes,4,opt,name=witness_script,json=witnessScript,proto3" json:"witness_script,omitempty"`
 	// *
-	// A description of the output being spent. The value and script MUST be provided.
+	// A description of the output being spent. The value and script MUST be
+	// provided.
 	Output *TxOut `protobuf:"bytes,5,opt,name=output,proto3" json:"output,omitempty"`
 	// *
 	// The target sighash type that should be used when generating the final
@@ -218,7 +219,7 @@ func (m *SignDescriptor) Reset()         { *m = SignDescriptor{} }
 func (m *SignDescriptor) String() string { return proto.CompactTextString(m) }
 func (*SignDescriptor) ProtoMessage()    {}
 func (*SignDescriptor) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{3}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{3}
 }
 func (m *SignDescriptor) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignDescriptor.Unmarshal(m, b)
@@ -301,7 +302,7 @@ func (m *SignReq) Reset()         { *m = SignReq{} }
 func (m *SignReq) String() string { return proto.CompactTextString(m) }
 func (*SignReq) ProtoMessage()    {}
 func (*SignReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{4}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{4}
 }
 func (m *SignReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignReq.Unmarshal(m, b)
@@ -349,7 +350,7 @@ func (m *SignResp) Reset()         { *m = SignResp{} }
 func (m *SignResp) String() string { return proto.CompactTextString(m) }
 func (*SignResp) ProtoMessage()    {}
 func (*SignResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{5}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{5}
 }
 func (m *SignResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignResp.Unmarshal(m, b)
@@ -392,7 +393,7 @@ func (m *InputScript) Reset()         { *m = InputScript{} }
 func (m *InputScript) String() string { return proto.CompactTextString(m) }
 func (*InputScript) ProtoMessage()    {}
 func (*InputScript) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{6}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{6}
 }
 func (m *InputScript) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_InputScript.Unmarshal(m, b)
@@ -438,7 +439,7 @@ func (m *InputScriptResp) Reset()         { *m = InputScriptResp{} }
 func (m *InputScriptResp) String() string { return proto.CompactTextString(m) }
 func (*InputScriptResp) ProtoMessage()    {}
 func (*InputScriptResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{7}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{7}
 }
 func (m *InputScriptResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_InputScriptResp.Unmarshal(m, b)
@@ -479,7 +480,7 @@ func (m *SignMessageReq) Reset()         { *m = SignMessageReq{} }
 func (m *SignMessageReq) String() string { return proto.CompactTextString(m) }
 func (*SignMessageReq) ProtoMessage()    {}
 func (*SignMessageReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{8}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{8}
 }
 func (m *SignMessageReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignMessageReq.Unmarshal(m, b)
@@ -526,7 +527,7 @@ func (m *SignMessageResp) Reset()         { *m = SignMessageResp{} }
 func (m *SignMessageResp) String() string { return proto.CompactTextString(m) }
 func (*SignMessageResp) ProtoMessage()    {}
 func (*SignMessageResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{9}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{9}
 }
 func (m *SignMessageResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignMessageResp.Unmarshal(m, b)
@@ -571,7 +572,7 @@ func (m *VerifyMessageReq) Reset()         { *m = VerifyMessageReq{} }
 func (m *VerifyMessageReq) String() string { return proto.CompactTextString(m) }
 func (*VerifyMessageReq) ProtoMessage()    {}
 func (*VerifyMessageReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{10}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{10}
 }
 func (m *VerifyMessageReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VerifyMessageReq.Unmarshal(m, b)
@@ -624,7 +625,7 @@ func (m *VerifyMessageResp) Reset()         { *m = VerifyMessageResp{} }
 func (m *VerifyMessageResp) String() string { return proto.CompactTextString(m) }
 func (*VerifyMessageResp) ProtoMessage()    {}
 func (*VerifyMessageResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{11}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{11}
 }
 func (m *VerifyMessageResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VerifyMessageResp.Unmarshal(m, b)
@@ -667,7 +668,7 @@ func (m *SharedKeyRequest) Reset()         { *m = SharedKeyRequest{} }
 func (m *SharedKeyRequest) String() string { return proto.CompactTextString(m) }
 func (*SharedKeyRequest) ProtoMessage()    {}
 func (*SharedKeyRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{12}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{12}
 }
 func (m *SharedKeyRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SharedKeyRequest.Unmarshal(m, b)
@@ -713,7 +714,7 @@ func (m *SharedKeyResponse) Reset()         { *m = SharedKeyResponse{} }
 func (m *SharedKeyResponse) String() string { return proto.CompactTextString(m) }
 func (*SharedKeyResponse) ProtoMessage()    {}
 func (*SharedKeyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_signer_bcb70ef9420ba2cd, []int{13}
+	return fileDescriptor_signer_0359c0686f0cfbaf, []int{13}
 }
 func (m *SharedKeyResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SharedKeyResponse.Unmarshal(m, b)
@@ -1041,9 +1042,9 @@ var _Signer_serviceDesc = grpc.ServiceDesc{
 	Metadata: "signrpc/signer.proto",
 }
 
-func init() { proto.RegisterFile("signrpc/signer.proto", fileDescriptor_signer_bcb70ef9420ba2cd) }
+func init() { proto.RegisterFile("signrpc/signer.proto", fileDescriptor_signer_0359c0686f0cfbaf) }
 
-var fileDescriptor_signer_bcb70ef9420ba2cd = []byte{
+var fileDescriptor_signer_0359c0686f0cfbaf = []byte{
 	// 756 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0x5d, 0x8f, 0xdb, 0x44,
 	0x14, 0xd5, 0x26, 0x6c, 0x92, 0xbd, 0x4e, 0x76, 0xb3, 0xc3, 0xaa, 0xb8, 0x0b, 0x88, 0x60, 0xa9,

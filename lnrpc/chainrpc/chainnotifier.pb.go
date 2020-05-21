@@ -53,7 +53,7 @@ func (m *ConfRequest) Reset()         { *m = ConfRequest{} }
 func (m *ConfRequest) String() string { return proto.CompactTextString(m) }
 func (*ConfRequest) ProtoMessage()    {}
 func (*ConfRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{0}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{0}
 }
 func (m *ConfRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfRequest.Unmarshal(m, b)
@@ -106,7 +106,8 @@ type ConfDetails struct {
 	RawTx []byte `protobuf:"bytes,1,opt,name=raw_tx,json=rawTx,proto3" json:"raw_tx,omitempty"`
 	// The hash of the block in which the confirmed transaction was included in.
 	BlockHash []byte `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
-	// The height of the block in which the confirmed transaction was included in.
+	// The height of the block in which the confirmed transaction was included
+	// in.
 	BlockHeight uint32 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// The index of the confirmed transaction within the transaction.
 	TxIndex              uint32   `protobuf:"varint,4,opt,name=tx_index,json=txIndex,proto3" json:"tx_index,omitempty"`
@@ -119,7 +120,7 @@ func (m *ConfDetails) Reset()         { *m = ConfDetails{} }
 func (m *ConfDetails) String() string { return proto.CompactTextString(m) }
 func (*ConfDetails) ProtoMessage()    {}
 func (*ConfDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{1}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{1}
 }
 func (m *ConfDetails) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfDetails.Unmarshal(m, b)
@@ -177,7 +178,7 @@ func (m *Reorg) Reset()         { *m = Reorg{} }
 func (m *Reorg) String() string { return proto.CompactTextString(m) }
 func (*Reorg) ProtoMessage()    {}
 func (*Reorg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{2}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{2}
 }
 func (m *Reorg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Reorg.Unmarshal(m, b)
@@ -211,7 +212,7 @@ func (m *ConfEvent) Reset()         { *m = ConfEvent{} }
 func (m *ConfEvent) String() string { return proto.CompactTextString(m) }
 func (*ConfEvent) ProtoMessage()    {}
 func (*ConfEvent) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{3}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{3}
 }
 func (m *ConfEvent) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfEvent.Unmarshal(m, b)
@@ -356,7 +357,7 @@ func (m *Outpoint) Reset()         { *m = Outpoint{} }
 func (m *Outpoint) String() string { return proto.CompactTextString(m) }
 func (*Outpoint) ProtoMessage()    {}
 func (*Outpoint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{4}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{4}
 }
 func (m *Outpoint) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Outpoint.Unmarshal(m, b)
@@ -415,7 +416,7 @@ func (m *SpendRequest) Reset()         { *m = SpendRequest{} }
 func (m *SpendRequest) String() string { return proto.CompactTextString(m) }
 func (*SpendRequest) ProtoMessage()    {}
 func (*SpendRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{5}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{5}
 }
 func (m *SpendRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SpendRequest.Unmarshal(m, b)
@@ -476,7 +477,7 @@ func (m *SpendDetails) Reset()         { *m = SpendDetails{} }
 func (m *SpendDetails) String() string { return proto.CompactTextString(m) }
 func (*SpendDetails) ProtoMessage()    {}
 func (*SpendDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{6}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{6}
 }
 func (m *SpendDetails) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SpendDetails.Unmarshal(m, b)
@@ -545,7 +546,7 @@ func (m *SpendEvent) Reset()         { *m = SpendEvent{} }
 func (m *SpendEvent) String() string { return proto.CompactTextString(m) }
 func (*SpendEvent) ProtoMessage()    {}
 func (*SpendEvent) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{7}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{7}
 }
 func (m *SpendEvent) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SpendEvent.Unmarshal(m, b)
@@ -690,7 +691,7 @@ func (m *BlockEpoch) Reset()         { *m = BlockEpoch{} }
 func (m *BlockEpoch) String() string { return proto.CompactTextString(m) }
 func (*BlockEpoch) ProtoMessage()    {}
 func (*BlockEpoch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chainnotifier_7f5a7ad17988064c, []int{8}
+	return fileDescriptor_chainnotifier_500ce70815a446bf, []int{8}
 }
 func (m *BlockEpoch) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BlockEpoch.Unmarshal(m, b)
@@ -1006,10 +1007,10 @@ var _ChainNotifier_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("chainrpc/chainnotifier.proto", fileDescriptor_chainnotifier_7f5a7ad17988064c)
+	proto.RegisterFile("chainrpc/chainnotifier.proto", fileDescriptor_chainnotifier_500ce70815a446bf)
 }
 
-var fileDescriptor_chainnotifier_7f5a7ad17988064c = []byte{
+var fileDescriptor_chainnotifier_500ce70815a446bf = []byte{
 	// 574 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x4f, 0x6f, 0x13, 0x3f,
 	0x10, 0xed, 0xb6, 0xdd, 0xfc, 0x99, 0x24, 0xbf, 0xb4, 0xfe, 0xa5, 0x51, 0x5a, 0x40, 0x94, 0x3d,
