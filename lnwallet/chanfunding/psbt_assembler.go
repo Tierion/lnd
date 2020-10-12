@@ -125,6 +125,11 @@ type PsbtIntent struct {
 	// Only witness data should be added after the verification process.
 	PendingPsbt *psbt.Packet
 
+	// FinalTX is the final, signed and ready to be published wire format
+	// transaction. This is only set after the PsbtFinalize step was
+	// completed successfully.
+	FinalTX *wire.MsgTx
+
 	// PsbtReady is an error channel the funding manager will listen for
 	// a signal about the PSBT being ready to continue the funding flow. In
 	// the normal, happy flow, this channel is only ever closed. If a
@@ -270,12 +275,29 @@ func (i *PsbtIntent) Finalize(packet *psbt.Packet) error {
 	if err != nil {
 		return fmt.Errorf("error finalizing PSBT: %v", err)
 	}
-	_, err = psbt.Extract(packet)
+	rawTx, err := psbt.Extract(packet)
 	if err != nil {
 		return fmt.Errorf("unable to extract funding TX: %v", err)
 	}
 
-	// Do a basic check that this is still the same PSBT that we verified in
+	return i.FinalizeRawTX(rawTx)
+}
+
+// FinalizeRawTX makes sure the final raw transaction that is given to the
+// intent is fully valid and signed but still contains the same UTXOs and
+// outputs as the pending transaction we previously verified. If everything
+// checks out, the funding manager is informed that the channel can now be
+// opened and the funding transaction be broadcast.
+func (i *PsbtIntent) FinalizeRawTX(rawTx *wire.MsgTx) error {
+	if rawTx == nil {
+		return fmt.Errorf("raw transaction is nil")
+	}
+	if i.State != PsbtVerified {
+		return fmt.Errorf("invalid state. got %v expected %v", i.State,
+			PsbtVerified)
+	}
+
+	// Do a basic check that this is still the same TX that we verified in
 	// the previous step. This is to protect the user from unwanted
 	// modifications. We only check the outputs and previous outpoints of
 	// the inputs of the wire transaction because the fields in the PSBT
@@ -283,23 +305,29 @@ func (i *PsbtIntent) Finalize(packet *psbt.Packet) error {
 	if i.PendingPsbt == nil {
 		return fmt.Errorf("PSBT was not verified first")
 	}
-	err = verifyOutputsEqual(
-		packet.UnsignedTx.TxOut, i.PendingPsbt.UnsignedTx.TxOut,
-	)
+	err := verifyOutputsEqual(rawTx.TxOut, i.PendingPsbt.UnsignedTx.TxOut)
 	if err != nil {
 		return fmt.Errorf("outputs differ from verified PSBT: %v", err)
 	}
 	err = verifyInputPrevOutpointsEqual(
-		packet.UnsignedTx.TxIn, i.PendingPsbt.UnsignedTx.TxIn,
+		rawTx.TxIn, i.PendingPsbt.UnsignedTx.TxIn,
 	)
 	if err != nil {
 		return fmt.Errorf("inputs differ from verified PSBT: %v", err)
 	}
 
-	// As far as we can tell, this PSBT is ok to be used as a funding
+	// We also check that we have a signed TX. This is only necessary if the
+	// FinalizeRawTX is called directly with a wire format TX instead of
+	// extracting the TX from a PSBT.
+	err = verifyInputsSigned(rawTx.TxIn)
+	if err != nil {
+		return fmt.Errorf("inputs not signed: %v", err)
+	}
+
+	// As far as we can tell, this TX is ok to be used as a funding
 	// transaction.
-	i.PendingPsbt = packet
 	i.State = PsbtFinalized
+	i.FinalTX = rawTx
 
 	// Signal the funding manager that it can now finally continue with its
 	// funding flow as the PSBT is now ready to be converted into a real
@@ -319,32 +347,22 @@ func (i *PsbtIntent) CompileFundingTx() (*wire.MsgTx, error) {
 			i.State, PsbtFinalized)
 	}
 
-	// Make sure the PSBT can be finalized and extracted.
-	err := psbt.MaybeFinalizeAll(i.PendingPsbt)
-	if err != nil {
-		return nil, fmt.Errorf("error finalizing PSBT: %v", err)
-	}
-	fundingTx, err := psbt.Extract(i.PendingPsbt)
-	if err != nil {
-		return nil, fmt.Errorf("unable to extract funding TX: %v", err)
-	}
-
 	// Identify our funding outpoint now that we know everything's ready.
 	_, txOut, err := i.FundingOutput()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get funding output: %v", err)
 	}
-	ok, idx := input.FindScriptOutputIndex(fundingTx, txOut.PkScript)
+	ok, idx := input.FindScriptOutputIndex(i.FinalTX, txOut.PkScript)
 	if !ok {
 		return nil, fmt.Errorf("funding output not found in PSBT")
 	}
 	i.chanPoint = &wire.OutPoint{
-		Hash:  fundingTx.TxHash(),
+		Hash:  i.FinalTX.TxHash(),
 		Index: idx,
 	}
 	i.State = PsbtFundingTxCompiled
 
-	return fundingTx, nil
+	return i.FinalTX, nil
 }
 
 // RemoteCanceled informs the listener of the PSBT ready channel that the
@@ -387,6 +405,10 @@ type PsbtAssembler struct {
 	// netParams are the network parameters used to encode the P2WSH funding
 	// address.
 	netParams *chaincfg.Params
+
+	// shouldPublish specifies if the assembler should publish the
+	// transaction once the channel funding has completed.
+	shouldPublish bool
 }
 
 // NewPsbtAssembler creates a new CannedAssembler from the material required
@@ -394,12 +416,13 @@ type PsbtAssembler struct {
 // be supplied which will be used to add the channel output to instead of
 // creating a new one.
 func NewPsbtAssembler(fundingAmt btcutil.Amount, basePsbt *psbt.Packet,
-	netParams *chaincfg.Params) *PsbtAssembler {
+	netParams *chaincfg.Params, shouldPublish bool) *PsbtAssembler {
 
 	return &PsbtAssembler{
-		fundingAmt: fundingAmt,
-		basePsbt:   basePsbt,
-		netParams:  netParams,
+		fundingAmt:    fundingAmt,
+		basePsbt:      basePsbt,
+		netParams:     netParams,
+		shouldPublish: shouldPublish,
 	}
 }
 
@@ -436,16 +459,18 @@ func (p *PsbtAssembler) ProvisionChannel(req *Request) (Intent, error) {
 	return intent, nil
 }
 
-// FundingTxAvailable is an empty method that an assembler can implement to
-// signal to callers that its able to provide the funding transaction for the
-// channel via the intent it returns.
+// ShouldPublishFundingTx is a method of the assembler that signals if the
+// funding transaction should be published after the channel negotiations are
+// completed with the remote peer.
 //
-// NOTE: This method is a part of the FundingTxAssembler interface.
-func (p *PsbtAssembler) FundingTxAvailable() {}
+// NOTE: This method is a part of the ConditionalPublishAssembler interface.
+func (p *PsbtAssembler) ShouldPublishFundingTx() bool {
+	return p.shouldPublish
+}
 
-// A compile-time assertion to ensure PsbtAssembler meets the Assembler
-// interface.
-var _ Assembler = (*PsbtAssembler)(nil)
+// A compile-time assertion to ensure PsbtAssembler meets the
+// ConditionalPublishAssembler interface.
+var _ ConditionalPublishAssembler = (*PsbtAssembler)(nil)
 
 // sumUtxoInputValues tries to extract the sum of all inputs specified in the
 // UTXO fields of the PSBT. An error is returned if an input is specified that
@@ -518,6 +543,21 @@ func verifyInputPrevOutpointsEqual(ins1, ins2 []*wire.TxIn) error {
 		if in.PreviousOutPoint != ins2[idx].PreviousOutPoint {
 			return fmt.Errorf("previous outpoint of input %d is "+
 				"different", idx)
+		}
+	}
+	return nil
+}
+
+// verifyInputsSigned verifies that the given list of inputs is non-empty and
+// that all the inputs either contain a script signature or a witness stack.
+func verifyInputsSigned(ins []*wire.TxIn) error {
+	if len(ins) == 0 {
+		return fmt.Errorf("no inputs in transaction")
+	}
+	for idx, in := range ins {
+		if len(in.SignatureScript) == 0 && len(in.Witness) == 0 {
+			return fmt.Errorf("input %d has no signature data "+
+				"attached", idx)
 		}
 	}
 	return nil

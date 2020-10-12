@@ -271,6 +271,7 @@ func main() {
 		walletBalanceCommand,
 		channelBalanceCommand,
 		getInfoCommand,
+		getRecoveryInfoCommand,
 		pendingChannelsCommand,
 		sendPaymentCommand,
 		payInvoiceCommand,
@@ -300,6 +301,8 @@ func main() {
 		verifyChanBackupCommand,
 		restoreChanBackupCommand,
 		bakeMacaroonCommand,
+		listPermissionsCommand,
+		printMacaroonCommand,
 		trackPaymentCommand,
 		versionCommand,
 	}
