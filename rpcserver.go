@@ -4888,7 +4888,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			} else {
 				rpcsLog.Error(err)
 			}
-		} 
+		}
 	}
 
 	return lnrpc.RPCTransactionDetails(txDetails), nil
