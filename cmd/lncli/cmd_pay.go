@@ -14,21 +14,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/btcsuite/btcutil"
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/jedib0t/go-pretty/text"
 	"github.com/lightninglabs/protobuf-hex-display/jsonpb"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/lightningnetwork/lnd/lnrpc/routerrpc"
 	"github.com/lightningnetwork/lnd/lntypes"
+	"github.com/lightningnetwork/lnd/lnwire"
 	"github.com/lightningnetwork/lnd/record"
 	"github.com/lightningnetwork/lnd/routing/route"
 	"github.com/urfave/cli"
 )
 
 const (
-	// paymentTimeoutSeconds is the default timeout for the payment loop in
-	// lnd. No new attempts will be started after the timeout.
-	paymentTimeoutSeconds = 60
+	// paymentTimeout is the default timeout for the payment loop in lnd.
+	// No new attempts will be started after the timeout.
+	paymentTimeout = time.Second * 60
 )
 
 var (
@@ -71,6 +73,20 @@ var (
 			"messages. Set by default on Windows because table " +
 			"formatting is unsupported.",
 	}
+
+	maxShardSizeSatFlag = cli.UintFlag{
+		Name: "max_shard_size_sat",
+		Usage: "the largest payment split that should be attempted if " +
+			"payment splitting is required to attempt a payment, " +
+			"specified in satoshis",
+	}
+
+	maxShardSizeMsatFlag = cli.UintFlag{
+		Name: "max_shard_size_msat",
+		Usage: "the largest payment split that should be attempted if " +
+			"payment splitting is required to attempt a payment, " +
+			"specified in milli-satoshis",
+	}
 )
 
 // paymentFlags returns common flags for sendpayment and payinvoice.
@@ -91,6 +107,13 @@ func paymentFlags() []cli.Flag {
 				"the maximum fee allowed when sending the " +
 				"payment",
 		},
+		cli.DurationFlag{
+			Name: "timeout",
+			Usage: "the maximum amount of time we should spend " +
+				"trying to fulfill the payment, failing " +
+				"after the timeout has elapsed",
+			Value: paymentTimeout,
+		},
 		cltvLimitFlag,
 		lastHopFlag,
 		cli.Uint64Flag{
@@ -108,6 +131,7 @@ func paymentFlags() []cli.Flag {
 			Usage: "allow sending a circular payment to self",
 		},
 		dataFlag, inflightUpdatesFlag, maxPartsFlag, jsonFlag,
+		maxShardSizeSatFlag, maxShardSizeMsatFlag,
 	}
 }
 
@@ -336,11 +360,33 @@ func sendPaymentRequest(ctx *cli.Context,
 	}
 
 	req.CltvLimit = int32(ctx.Int(cltvLimitFlag.Name))
-	req.TimeoutSeconds = paymentTimeoutSeconds
+
+	pmtTimeout := ctx.Duration("timeout")
+	if pmtTimeout <= 0 {
+		return errors.New("payment timeout must be greater than zero")
+	}
+	req.TimeoutSeconds = int32(pmtTimeout.Seconds())
 
 	req.AllowSelfPayment = ctx.Bool("allow_self_payment")
 
 	req.MaxParts = uint32(ctx.Uint(maxPartsFlag.Name))
+
+	switch {
+	// If the max shard size is specified, then it should either be in sat
+	// or msat, but not both.
+	case ctx.Uint64(maxShardSizeMsatFlag.Name) != 0 &&
+		ctx.Uint64(maxShardSizeSatFlag.Name) != 0:
+		return fmt.Errorf("only --max_split_size_msat or " +
+			"--max_split_size_sat should be set, but not both")
+
+	case ctx.Uint64(maxShardSizeMsatFlag.Name) != 0:
+		req.MaxShardSizeMsat = ctx.Uint64(maxShardSizeMsatFlag.Name)
+
+	case ctx.Uint64(maxShardSizeSatFlag.Name) != 0:
+		req.MaxShardSizeMsat = uint64(lnwire.NewMSatFromSatoshis(
+			btcutil.Amount(ctx.Uint64(maxShardSizeSatFlag.Name)),
+		))
+	}
 
 	// Parse custom data records.
 	data := ctx.String(dataFlag.Name)

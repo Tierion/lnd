@@ -511,13 +511,24 @@
         "PAYMENT_ADDR_REQ",
         "PAYMENT_ADDR_OPT",
         "MPP_REQ",
-        "MPP_OPT"
+        "MPP_OPT",
+        "WUMBO_CHANNELS_REQ",
+        "WUMBO_CHANNELS_OPT",
+        "ANCHORS_REQ",
+        "ANCHORS_OPT",
+        "ANCHORS_ZERO_FEE_HTLC_REQ",
+        "ANCHORS_ZERO_FEE_HTLC_OPT"
       ],
       "default": "DATALOSS_PROTECT_REQ"
     },
     "lnrpcHTLCAttempt": {
       "type": "object",
       "properties": {
+        "attempt_id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The unique ID that is used for this attempt."
+        },
         "status": {
           "$ref": "#/definitions/HTLCAttemptHTLCStatus",
           "description": "The status of the HTLC."
@@ -832,6 +843,11 @@
             "format": "byte"
           },
           "description": "A list of hops that defines the route. This does not include the source hop\npubkey."
+        },
+        "payment_addr": {
+          "type": "string",
+          "format": "byte",
+          "description": "An optional payment addr to be included within the last hop of the route."
         }
       }
     },
@@ -944,6 +960,11 @@
             "format": "byte"
           },
           "description": "Any custom records that were present in the payload."
+        },
+        "onion_blob": {
+          "type": "string",
+          "format": "byte",
+          "title": "The onion blob for the next hop"
         }
       }
     },
@@ -1239,6 +1260,11 @@
           "format": "int32",
           "description": "The CLTV delta from the current height that should be used to set the\ntimelock for the final hop."
         },
+        "payment_addr": {
+          "type": "string",
+          "format": "byte",
+          "description": "An optional payment addr to be included within the last hop of the route."
+        },
         "payment_request": {
           "type": "string",
           "description": "A bare-bones invoice for a payment within the Lightning Network.  With the\ndetails of the invoice, the sender has all the data necessary to send a\npayment to the recipient. The amount in the payment request may be zero. In\nthat case it is required to set the amt field as well. If no payment request\nis specified, the following fields are required: dest, amt and payment_hash."
@@ -1317,6 +1343,11 @@
           "type": "boolean",
           "format": "boolean",
           "description": "If set, only the final payment update is streamed back. Intermediate updates\nthat show which htlcs are still in flight are suppressed."
+        },
+        "max_shard_size_msat": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The largest payment split that should be attempted when making a payment if\nsplitting is necessary. Setting this value will effectively cause lnd to\nsplit more aggressively, vs only when it thinks it needs to. Note that this\nvalue is in milli-satoshis."
         }
       }
     },

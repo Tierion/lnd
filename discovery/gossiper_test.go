@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,16 +22,18 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
+	"github.com/lightningnetwork/lnd/batch"
 	"github.com/lightningnetwork/lnd/chainntnfs"
 	"github.com/lightningnetwork/lnd/channeldb"
-	"github.com/lightningnetwork/lnd/input"
 	"github.com/lightningnetwork/lnd/lnpeer"
+	"github.com/lightningnetwork/lnd/lntest/mock"
 	"github.com/lightningnetwork/lnd/lntest/wait"
 	"github.com/lightningnetwork/lnd/lnwire"
 	"github.com/lightningnetwork/lnd/netann"
 	"github.com/lightningnetwork/lnd/routing"
 	"github.com/lightningnetwork/lnd/routing/route"
 	"github.com/lightningnetwork/lnd/ticker"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -92,26 +95,6 @@ func makeTestDB() (*channeldb.DB, func(), error) {
 	return cdb, cleanUp, nil
 }
 
-type mockSigner struct {
-	privKey *btcec.PrivateKey
-}
-
-func (n *mockSigner) SignMessage(pubKey *btcec.PublicKey,
-	msg []byte) (input.Signature, error) {
-
-	if !pubKey.IsEqual(n.privKey.PubKey()) {
-		return nil, fmt.Errorf("unknown public key")
-	}
-
-	digest := chainhash.DoubleHashB(msg)
-	sign, err := n.privKey.Sign(digest)
-	if err != nil {
-		return nil, fmt.Errorf("can't sign the message: %v", err)
-	}
-
-	return sign, nil
-}
-
 type mockGraphSource struct {
 	bestHeight uint32
 
@@ -133,7 +116,9 @@ func newMockRouter(height uint32) *mockGraphSource {
 
 var _ routing.ChannelGraphSource = (*mockGraphSource)(nil)
 
-func (r *mockGraphSource) AddNode(node *channeldb.LightningNode) error {
+func (r *mockGraphSource) AddNode(node *channeldb.LightningNode,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -141,7 +126,9 @@ func (r *mockGraphSource) AddNode(node *channeldb.LightningNode) error {
 	return nil
 }
 
-func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo) error {
+func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -153,7 +140,9 @@ func (r *mockGraphSource) AddEdge(info *channeldb.ChannelEdgeInfo) error {
 	return nil
 }
 
-func (r *mockGraphSource) UpdateEdge(edge *channeldb.ChannelEdgePolicy) error {
+func (r *mockGraphSource) UpdateEdge(edge *channeldb.ChannelEdgePolicy,
+	_ ...batch.SchedulerOption) error {
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -555,7 +544,7 @@ func createNodeAnnouncement(priv *btcec.PrivateKey,
 		a.ExtraOpaqueData = extraBytes[0]
 	}
 
-	signer := mockSigner{priv}
+	signer := mock.SingleSigner{Privkey: priv}
 	sig, err := netann.SignAnnouncement(&signer, priv.PubKey(), a)
 	if err != nil {
 		return nil, err
@@ -607,7 +596,7 @@ func createUpdateAnnouncement(blockHeight uint32,
 
 func signUpdate(nodeKey *btcec.PrivateKey, a *lnwire.ChannelUpdate) error {
 	pub := nodeKey.PubKey()
-	signer := mockSigner{nodeKey}
+	signer := mock.SingleSigner{Privkey: nodeKey}
 	sig, err := netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return err
@@ -649,7 +638,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	a := createAnnouncementWithoutProof(blockHeight, extraBytes...)
 
 	pub := nodeKeyPriv1.PubKey()
-	signer := mockSigner{nodeKeyPriv1}
+	signer := mock.SingleSigner{Privkey: nodeKeyPriv1}
 	sig, err := netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -660,7 +649,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = nodeKeyPriv2.PubKey()
-	signer = mockSigner{nodeKeyPriv2}
+	signer = mock.SingleSigner{Privkey: nodeKeyPriv2}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -671,7 +660,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = bitcoinKeyPriv1.PubKey()
-	signer = mockSigner{bitcoinKeyPriv1}
+	signer = mock.SingleSigner{Privkey: bitcoinKeyPriv1}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -682,7 +671,7 @@ func createRemoteChannelAnnouncement(blockHeight uint32,
 	}
 
 	pub = bitcoinKeyPriv2.PubKey()
-	signer = mockSigner{bitcoinKeyPriv2}
+	signer = mock.SingleSigner{Privkey: bitcoinKeyPriv2}
 	sig, err = netann.SignAnnouncement(&signer, pub, a)
 	if err != nil {
 		return nil, err
@@ -751,19 +740,21 @@ func createTestCtx(startHeight uint32) (*testCtx, func(), error) {
 				Timestamp: testTimestamp,
 			}, nil
 		},
-		Router:               router,
-		TrickleDelay:         trickleDelay,
-		RetransmitTicker:     ticker.NewForce(retransmitDelay),
-		RebroadcastInterval:  rebroadcastInterval,
-		ProofMatureDelta:     proofMatureDelta,
-		WaitingProofStore:    waitingProofStore,
-		MessageStore:         newMockMessageStore(),
-		RotateTicker:         ticker.NewForce(DefaultSyncerRotationInterval),
-		HistoricalSyncTicker: ticker.NewForce(DefaultHistoricalSyncInterval),
-		NumActiveSyncers:     3,
-		AnnSigner:            &mockSigner{nodeKeyPriv1},
-		SubBatchDelay:        time.Second * 5,
-		MinimumBatchSize:     10,
+		Router:                router,
+		TrickleDelay:          trickleDelay,
+		RetransmitTicker:      ticker.NewForce(retransmitDelay),
+		RebroadcastInterval:   rebroadcastInterval,
+		ProofMatureDelta:      proofMatureDelta,
+		WaitingProofStore:     waitingProofStore,
+		MessageStore:          newMockMessageStore(),
+		RotateTicker:          ticker.NewForce(DefaultSyncerRotationInterval),
+		HistoricalSyncTicker:  ticker.NewForce(DefaultHistoricalSyncInterval),
+		NumActiveSyncers:      3,
+		AnnSigner:             &mock.SingleSigner{Privkey: nodeKeyPriv1},
+		SubBatchDelay:         time.Second * 5,
+		MinimumBatchSize:      10,
+		MaxChannelUpdateBurst: DefaultMaxChannelUpdateBurst,
+		ChannelUpdateInterval: DefaultChannelUpdateInterval,
 	}, nodeKeyPub1)
 
 	if err := gossiper.Start(); err != nil {
@@ -937,8 +928,7 @@ func TestPrematureAnnouncement(t *testing.T) {
 
 	// Pretending that we receive the valid channel update announcement from
 	// remote side, but block height of this announcement is greater than
-	// highest know to us, for that reason it should be added to the
-	// repeat/premature batch.
+	// highest known to us, so it should be rejected.
 	ua, err := createUpdateAnnouncement(1, 0, nodeKeyPriv1, timestamp)
 	if err != nil {
 		t.Fatalf("can't create update announcement: %v", err)
@@ -952,31 +942,6 @@ func TestPrematureAnnouncement(t *testing.T) {
 
 	if len(ctx.router.edges) != 0 {
 		t.Fatal("edge update was added to router")
-	}
-
-	// Generate new block and waiting the previously added announcements
-	// to be proceeded.
-	newBlock := &wire.MsgBlock{}
-	ctx.notifier.notifyBlock(newBlock.Header.BlockHash(), 1)
-
-	select {
-	case <-ctx.broadcastedMessage:
-	case <-time.After(2 * trickleDelay):
-		t.Fatal("announcement wasn't broadcasted")
-	}
-
-	if len(ctx.router.infos) != 1 {
-		t.Fatalf("edge wasn't added to router: %v", err)
-	}
-
-	select {
-	case <-ctx.broadcastedMessage:
-	case <-time.After(2 * trickleDelay):
-		t.Fatal("announcement wasn't broadcasted")
-	}
-
-	if len(ctx.router.edges) != 1 {
-		t.Fatalf("edge update wasn't added to router: %v", err)
 	}
 }
 
@@ -1137,6 +1102,9 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1169,6 +1137,9 @@ func TestSignatureAnnouncementLocalFirst(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1238,6 +1209,9 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1375,6 +1349,9 @@ func TestOrphanSignatureAnnouncement(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1486,6 +1463,9 @@ func TestSignatureAnnouncementRetryAtStartup(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -1589,6 +1569,9 @@ out:
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -1773,6 +1756,9 @@ func TestSignatureAnnouncementFullProofWhenRemoteProof(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -2603,6 +2589,9 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 			number++
 			return nil
 		},
+		func() {
+			number = 0
+		},
 	); err != nil {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
 	}
@@ -2631,6 +2620,9 @@ func TestReceiveRemoteChannelUpdateFirst(t *testing.T) {
 		func(*channeldb.WaitingProof) error {
 			number++
 			return nil
+		},
+		func() {
+			number = 0
 		},
 	); err != nil && err != channeldb.ErrWaitingProofNotFound {
 		t.Fatalf("unable to retrieve objects from store: %v", err)
@@ -3853,6 +3845,12 @@ func TestCalculateCorrectSubBatchSizesDifferentDelay(t *testing.T) {
 	}
 }
 
+// markGraphSynced allows us to report that the initial historical sync has
+// completed.
+func (m *SyncManager) markGraphSyncing() {
+	atomic.StoreInt32(&m.initialHistoricalSyncCompleted, 0)
+}
+
 // TestBroadcastAnnsAfterGraphSynced ensures that we only broadcast
 // announcements after the graph has been considered as synced, i.e., after our
 // initial historical sync has completed.
@@ -3934,4 +3932,155 @@ func TestBroadcastAnnsAfterGraphSynced(t *testing.T) {
 		t.Fatalf("unable to create channel announcement: %v", err)
 	}
 	assertBroadcast(chanAnn2, true, true)
+}
+
+// TestRateLimitChannelUpdates ensures that we properly rate limit incoming
+// channel updates.
+func TestRateLimitChannelUpdates(t *testing.T) {
+	t.Parallel()
+
+	// Create our test harness.
+	const blockHeight = 100
+	ctx, cleanup, err := createTestCtx(blockHeight)
+	if err != nil {
+		t.Fatalf("can't create context: %v", err)
+	}
+	defer cleanup()
+	ctx.gossiper.cfg.RebroadcastInterval = time.Hour
+	ctx.gossiper.cfg.MaxChannelUpdateBurst = 5
+	ctx.gossiper.cfg.ChannelUpdateInterval = 5 * time.Second
+
+	// The graph should start empty.
+	require.Empty(t, ctx.router.infos)
+	require.Empty(t, ctx.router.edges)
+
+	// We'll create a batch of signed announcements, including updates for
+	// both sides, for a channel and process them. They should all be
+	// forwarded as this is our first time learning about the channel.
+	batch, err := createAnnouncements(blockHeight)
+	require.NoError(t, err)
+
+	nodePeer1 := &mockPeer{nodeKeyPriv1.PubKey(), nil, nil}
+	select {
+	case err := <-ctx.gossiper.ProcessRemoteAnnouncement(
+		batch.remoteChanAnn, nodePeer1,
+	):
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("remote announcement not processed")
+	}
+
+	select {
+	case err := <-ctx.gossiper.ProcessRemoteAnnouncement(
+		batch.chanUpdAnn1, nodePeer1,
+	):
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("remote announcement not processed")
+	}
+
+	nodePeer2 := &mockPeer{nodeKeyPriv2.PubKey(), nil, nil}
+	select {
+	case err := <-ctx.gossiper.ProcessRemoteAnnouncement(
+		batch.chanUpdAnn2, nodePeer2,
+	):
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("remote announcement not processed")
+	}
+
+	timeout := time.After(2 * trickleDelay)
+	for i := 0; i < 3; i++ {
+		select {
+		case <-ctx.broadcastedMessage:
+		case <-timeout:
+			t.Fatal("expected announcement to be broadcast")
+		}
+	}
+
+	shortChanID := batch.remoteChanAnn.ShortChannelID.ToUint64()
+	require.Contains(t, ctx.router.infos, shortChanID)
+	require.Contains(t, ctx.router.edges, shortChanID)
+
+	// We'll define a helper to assert whether updates should be rate
+	// limited or not depending on their contents.
+	assertRateLimit := func(update *lnwire.ChannelUpdate, peer lnpeer.Peer,
+		shouldRateLimit bool) {
+
+		t.Helper()
+
+		select {
+		case err := <-ctx.gossiper.ProcessRemoteAnnouncement(update, peer):
+			require.NoError(t, err)
+		case <-time.After(time.Second):
+			t.Fatal("remote announcement not processed")
+		}
+
+		select {
+		case <-ctx.broadcastedMessage:
+			if shouldRateLimit {
+				t.Fatal("unexpected channel update broadcast")
+			}
+		case <-time.After(2 * trickleDelay):
+			if !shouldRateLimit {
+				t.Fatal("expected channel update broadcast")
+			}
+		}
+	}
+
+	// We'll start with the keep alive case.
+	//
+	// We rate limit any keep alive updates that have not at least spanned
+	// our rebroadcast interval.
+	rateLimitKeepAliveUpdate := *batch.chanUpdAnn1
+	rateLimitKeepAliveUpdate.Timestamp++
+	require.NoError(t, signUpdate(nodeKeyPriv1, &rateLimitKeepAliveUpdate))
+	assertRateLimit(&rateLimitKeepAliveUpdate, nodePeer1, true)
+
+	keepAliveUpdate := *batch.chanUpdAnn1
+	keepAliveUpdate.Timestamp = uint32(
+		time.Unix(int64(batch.chanUpdAnn1.Timestamp), 0).
+			Add(ctx.gossiper.cfg.RebroadcastInterval).Unix(),
+	)
+	require.NoError(t, signUpdate(nodeKeyPriv1, &keepAliveUpdate))
+	assertRateLimit(&keepAliveUpdate, nodePeer1, false)
+
+	// Then, we'll move on to the non keep alive cases.
+	//
+	// For this test, non keep alive updates are rate limited to one per 5
+	// seconds with a max burst of 5 per direction. We'll process the max
+	// burst of one direction first. None of these should be rate limited.
+	updateSameDirection := keepAliveUpdate
+	for i := uint32(0); i < uint32(ctx.gossiper.cfg.MaxChannelUpdateBurst); i++ {
+		updateSameDirection.Timestamp++
+		updateSameDirection.BaseFee++
+		require.NoError(t, signUpdate(nodeKeyPriv1, &updateSameDirection))
+		assertRateLimit(&updateSameDirection, nodePeer1, false)
+	}
+
+	// Following with another update should be rate limited as the max burst
+	// has been reached and we haven't ticked at the next interval yet.
+	updateSameDirection.Timestamp++
+	updateSameDirection.BaseFee++
+	require.NoError(t, signUpdate(nodeKeyPriv1, &updateSameDirection))
+	assertRateLimit(&updateSameDirection, nodePeer1, true)
+
+	// An update for the other direction should not be rate limited.
+	updateDiffDirection := *batch.chanUpdAnn2
+	updateDiffDirection.Timestamp++
+	updateDiffDirection.BaseFee++
+	require.NoError(t, signUpdate(nodeKeyPriv2, &updateDiffDirection))
+	assertRateLimit(&updateDiffDirection, nodePeer2, false)
+
+	// Wait for the next interval to tick. Since we've only waited for one,
+	// only one more update is allowed.
+	<-time.After(ctx.gossiper.cfg.ChannelUpdateInterval)
+	for i := 0; i < ctx.gossiper.cfg.MaxChannelUpdateBurst; i++ {
+		updateSameDirection.Timestamp++
+		updateSameDirection.BaseFee++
+		require.NoError(t, signUpdate(nodeKeyPriv1, &updateSameDirection))
+
+		shouldRateLimit := i != 0
+		assertRateLimit(&updateSameDirection, nodePeer1, shouldRateLimit)
+	}
 }
