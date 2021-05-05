@@ -4859,7 +4859,6 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		startHeight = req.BlockHeight
 		endHeight = startHeight + 1
 	}
-
 	transactions, err := r.server.cc.wallet.ListTransactionDetails(
 		startHeight, endHeight,
 	)
@@ -4875,6 +4874,21 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			continue
 		}
 		txDetails = append(txDetails, tx)
+	}
+
+	if req.NumConfirmations == 0 && len(req.Txid) != 0 {
+		findHash, err := chainhash.NewHash(req.Txid)
+		if err != nil {
+			if foundHash, err := r.server.cc.chainIO.HasTransaction(findHash); err != nil && foundHash {
+				foundTxDetail := lnwallet.TransactionDetail{
+					Hash: *findHash,
+					NumConfirmations: 0,
+				}
+				txDetails = append(txDetails, &foundTxDetail)
+			} else {
+				rpcsLog.Error(err)
+			}
+		} 
 	}
 
 	return lnrpc.RPCTransactionDetails(txDetails), nil

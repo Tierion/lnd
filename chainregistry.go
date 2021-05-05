@@ -241,6 +241,7 @@ func newChainControlFromConfig(cfg *Config, localDB, remoteDB *channeldb.DB,
 		// We'll create ChainNotifier and FilteredChainView instances,
 		// along with the wallet's ChainSource, which are all backed by
 		// the neutrino light client.
+		neutrinoCS.EnableTxDownload()
 		cc.chainNotifier = neutrinonotify.New(
 			neutrinoCS, hintCache, hintCache,
 		)

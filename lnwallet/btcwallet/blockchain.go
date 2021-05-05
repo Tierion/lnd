@@ -142,6 +142,16 @@ func (b *BtcWallet) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
 	return b.chain.GetBlockHash(blockHeight)
 }
 
+// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
+func (b *BtcWallet) HasTransaction(tx *chainhash.Hash) (bool, error) {
+	switch backend := b.chain.(type) {
+	case *chain.NeutrinoClient:
+		return backend.CS.Mempool.HaveTransaction(tx), nil
+	default:
+		return false, errors.New("unsupported chain type")
+	}
+}
+
 // A compile time check to ensure that BtcWallet implements the BlockChainIO
 // interface.
 var _ lnwallet.WalletController = (*BtcWallet)(nil)

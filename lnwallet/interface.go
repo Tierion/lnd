@@ -331,6 +331,9 @@ type BlockChainIO interface {
 	// at the given height.
 	GetBlockHash(blockHeight int64) (*chainhash.Hash, error)
 
+	// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
+	HasTransaction(*chainhash.Hash) (bool, error)
+
 	// GetBlock returns the block in the main chain identified by the given
 	// hash.
 	GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error)

@@ -184,6 +184,10 @@ func (*mockChainIO) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
 	return nil, nil
 }
 
+func (*mockChainIO) HasTransaction(tx *chainhash.Hash) (bool, error) {
+	return false, nil
+}
+
 func (*mockChainIO) GetBlock(blockHash *chainhash.Hash) (*wire.MsgBlock, error) {
 	return nil, nil
 }
