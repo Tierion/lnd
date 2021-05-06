@@ -1579,6 +1579,8 @@ func initNeutrinoBackend(cfg *Config, chainDir string) (*neutrino.ChainService,
 		return nil, nil, err
 	}
 
+	neutrinoCS.EnableTxDownload()
+
 	cleanUp := func() {
 		if err := neutrinoCS.Stop(); err != nil {
 			ltndLog.Infof("Unable to stop neutrino light client: %v", err)
