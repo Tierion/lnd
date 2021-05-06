@@ -5117,6 +5117,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 				foundTxDetail := lnwallet.TransactionDetail{
 					Hash: *findHash,
 					NumConfirmations: 0,
+					Label: "mempool",
 				}
 				txDetails = append(txDetails, &foundTxDetail)
 			} else if err != nil {
