@@ -152,6 +152,16 @@ func (b *BtcWallet) HasTransaction(tx *chainhash.Hash) (bool, error) {
 	}
 }
 
+// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
+func (b *BtcWallet) GetMempool() (neutrino.Mempool, error) {
+	switch backend := b.chain.(type) {
+	case *chain.NeutrinoClient:
+		return *backend.CS.Mempool, nil
+	default:
+		return neutrino.Mempool{}, errors.New("unsupported chain type")
+	}
+}
+
 // A compile time check to ensure that BtcWallet implements the BlockChainIO
 // interface.
 var _ lnwallet.WalletController = (*BtcWallet)(nil)

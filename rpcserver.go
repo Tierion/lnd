@@ -5125,6 +5125,8 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 			}
 		} 
 	}
+	memp, err := r.server.cc.ChainIO.GetMempool()
+	rpcsLog.Error(errors.New(fmt.Sprintf("Mempool Size: %#v\nmempool Err: %s", memp, err)))
 
 	return lnrpc.RPCTransactionDetails(txDetails), nil
 }
