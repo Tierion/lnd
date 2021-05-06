@@ -5108,15 +5108,18 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	}
 
 	if req.NumConfirmations == 0 && len(req.Txid) != 0 {
-		findHash, err := chainhash.NewHash(req.Txid)
-		if err != nil {
-			if foundHash, err := r.server.cc.ChainIO.HasTransaction(findHash); err != nil && foundHash {
+		var err error
+		var findHash *chainhash.Hash
+		var foundHash bool
+		findHash, err = chainhash.NewHash(req.Txid)
+		if err == nil {
+			if foundHash, err = r.server.cc.ChainIO.HasTransaction(findHash); err == nil && foundHash {
 				foundTxDetail := lnwallet.TransactionDetail{
 					Hash: *findHash,
 					NumConfirmations: 0,
 				}
 				txDetails = append(txDetails, &foundTxDetail)
-			} else {
+			} else if err != nil {
 				rpcsLog.Error(err)
 			}
 		} 
