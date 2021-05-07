@@ -3,7 +3,6 @@ package lnwallet
 import (
 	"errors"
 	"fmt"
-	"github.com/lightninglabs/neutrino"
 	"sync"
 	"time"
 
@@ -369,11 +368,8 @@ type BlockChainIO interface {
 	// at the given height.
 	GetBlockHash(blockHeight int64) (*chainhash.Hash, error)
 
-	// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
-	HasTransaction(*chainhash.Hash) (bool, error)
-
-	// GetMempool
-	GetMempool() (neutrino.Mempool, error)
+	// GetTransaction checks for a transaction in the mempool of the current neutrino sync peer
+	GetTransaction(tx *chainhash.Hash) (*btcutil.Tx, error)
 
 	// GetBlock returns the block in the main chain identified by the given
 	// hash.

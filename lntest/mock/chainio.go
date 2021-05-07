@@ -4,7 +4,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/lightninglabs/neutrino"
+	"github.com/btcsuite/btcutil"
 )
 
 // ChainIO is a mock implementation of the BlockChainIO interface.
@@ -29,12 +29,8 @@ func (c *ChainIO) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
 	return nil, nil
 }
 
-func (c *ChainIO) HasTransaction(tx *chainhash.Hash) (bool, error) {
-	return false, nil
-}
-
-func (c *ChainIO) GetMempool() (neutrino.Mempool, error) {
-	return neutrino.Mempool{}, nil
+func (c *ChainIO) GetTransaction(tx *chainhash.Hash) (*btcutil.Tx, error) {
+	return nil, nil
 }
 
 // GetBlock currently returns dummy values.

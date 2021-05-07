@@ -5110,23 +5110,27 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	if req.NumConfirmations == 0 && len(req.Txid) != 0 {
 		var err error
 		var findHash *chainhash.Hash
-		var foundHash bool
+		var foundTx *btcutil.Tx
 		findHash, err = chainhash.NewHash(req.Txid)
 		if err == nil {
-			if foundHash, err = r.server.cc.ChainIO.HasTransaction(findHash); err == nil && foundHash {
-				foundTxDetail := lnwallet.TransactionDetail{
-					Hash: *findHash,
-					NumConfirmations: 0,
-					Label: "mempool",
+			if foundTx, err = r.server.cc.ChainIO.GetTransaction(findHash); err == nil && foundTx != nil {
+				rpcsLog.Error(errors.New(fmt.Sprintf("Found Tx: %+v", foundTx)))
+				msgTx := foundTx.MsgTx()
+				buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSizeStripped()))
+				if msgTx.SerializeNoWitness(buf) == nil {
+					foundTxDetail := lnwallet.TransactionDetail{
+						Hash: *findHash,
+						Label: "mempool",
+						RawTx: buf.Bytes(),
+				    }
+					txDetails = append(txDetails, &foundTxDetail)
 				}
-				txDetails = append(txDetails, &foundTxDetail)
+
 			} else if err != nil {
 				rpcsLog.Error(err)
 			}
 		} 
 	}
-	memp, err := r.server.cc.ChainIO.GetMempool()
-	rpcsLog.Error(errors.New(fmt.Sprintf("Mempool Size: %#v\nmempool Err: %s", memp, err)))
 
 	return lnrpc.RPCTransactionDetails(txDetails), nil
 }

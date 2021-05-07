@@ -142,23 +142,13 @@ func (b *BtcWallet) GetBlockHash(blockHeight int64) (*chainhash.Hash, error) {
 	return b.chain.GetBlockHash(blockHeight)
 }
 
-// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
-func (b *BtcWallet) HasTransaction(tx *chainhash.Hash) (bool, error) {
+// GetTransaction checks for a transaction in the mempool of the current neutrino sync peer
+func (b *BtcWallet) GetTransaction(tx *chainhash.Hash) (*btcutil.Tx, error) {
 	switch backend := b.chain.(type) {
 	case *chain.NeutrinoClient:
-		return backend.CS.Mempool.HaveTransaction(tx), nil
+		return backend.CS.GetWitnessTx(*tx)
 	default:
-		return false, errors.New("unsupported chain type")
-	}
-}
-
-// HasTransaction checks for a transaction in the mempool of the current neutrino sync peer
-func (b *BtcWallet) GetMempool() (neutrino.Mempool, error) {
-	switch backend := b.chain.(type) {
-	case *chain.NeutrinoClient:
-		return *backend.CS.Mempool, nil
-	default:
-		return neutrino.Mempool{}, errors.New("unsupported chain type")
+		return nil, errors.New("unsupported chain type")
 	}
 }
 

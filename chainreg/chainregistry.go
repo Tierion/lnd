@@ -307,7 +307,6 @@ func NewChainControl(cfg *Config) (*ChainControl, error) {
 		// along with the wallet's ChainSource, which are all backed by
 		// the neutrino light client.
 		cfg.NeutrinoCS.Start()
-		cfg.NeutrinoCS.EnableTxDownload()
 		cc.ChainNotifier = neutrinonotify.New(
 			cfg.NeutrinoCS, hintCache, hintCache,
 		)
