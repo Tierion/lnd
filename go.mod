@@ -87,6 +87,6 @@ replace github.com/lightningnetwork/lnd/clock => ./clock
 
 replace git.schwanenlied.me/yawning/bsaes.git => github.com/Yawning/bsaes v0.0.0-20180720073208-c0276d75487e
 
-replace github.com/lightninglabs/neutrino => github.com/Tierion/neutrino v0.11.1-0.20210504172137-954703429b25
+replace github.com/lightninglabs/neutrino => github.com/Tierion/neutrino v0.11.1-0.20210507153450-cd684b9be859
 
 go 1.13

@@ -8,6 +8,8 @@ github.com/NebulousLabs/go-upnp v0.0.0-20180202185039-29b680b06c82/go.mod h1:Gbu
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Tierion/neutrino v0.11.1-0.20210504172137-954703429b25 h1:opV1IU3+BJrd8BhiCvu4V+L+dLqW7RmoN+Y7APQYrXQ=
 github.com/Tierion/neutrino v0.11.1-0.20210504172137-954703429b25/go.mod h1:d7zCVUnGmKW1L8DIgdduiCtjEziWMbTL0XhpqQs8zVY=
+github.com/Tierion/neutrino v0.11.1-0.20210507153450-cd684b9be859 h1:+opzqkMJxcb5IJCj/2yySFEdO6db63JFoPkSGqYj2a8=
+github.com/Tierion/neutrino v0.11.1-0.20210507153450-cd684b9be859/go.mod h1:d7zCVUnGmKW1L8DIgdduiCtjEziWMbTL0XhpqQs8zVY=
 github.com/Yawning/aez v0.0.0-20180114000226-4dad034d9db2 h1:2be4ykKKov3M1yISM2E8gnGXZ/N2SsPawfnGiXxaYEU=
 github.com/Yawning/aez v0.0.0-20180114000226-4dad034d9db2/go.mod h1:9pIqrY6SXNL8vjRQE5Hd/OL5GyK/9MrGUWs87z/eFfk=
 github.com/Yawning/bsaes v0.0.0-20180720073208-c0276d75487e h1:n88VxLC80RPVHbFG/kq7ItMizCVRPCyLj63UMqxLkOw=
