@@ -5112,7 +5112,7 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		var findHash *chainhash.Hash
 		var foundTx *btcutil.Tx
 		findHashStr := hex.EncodeToString(req.Txid[:])
-		err = chainhash.Decode(findHash, findHashStr)
+		findHash, err = chainhash.NewHashFromStr(findHashStr)
 		if err == nil {
 			if foundTx, err = r.server.cc.ChainIO.GetTransaction(findHash); err == nil && foundTx != nil {
 				rpcsLog.Error(errors.New(fmt.Sprintf("Found Tx: %+v", foundTx)))
