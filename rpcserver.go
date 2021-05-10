@@ -5097,17 +5097,20 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		return nil, err
 	}
 	txDetails :=make([]*lnwallet.TransactionDetail, 0)
+	foundTx := false
 	for _, tx := range transactions {
 		if tx.NumConfirmations != 0 && tx.NumConfirmations < req.NumConfirmations {
 			continue
 		}
 		if len(req.Txid) != 0 && tx.Hash.String() != hex.EncodeToString(req.Txid[:]) {
 			continue
+		} else if tx.Hash.String() == hex.EncodeToString(req.Txid[:]) {
+			foundTx = true
 		}
 		txDetails = append(txDetails, tx)
 	}
 
-	if req.NumConfirmations == 0 && len(req.Txid) != 0 {
+	if req.NumConfirmations == 0 && len(req.Txid) != 0 && !foundTx {
 		var err error
 		var findHash *chainhash.Hash
 		var foundTx *btcutil.Tx
