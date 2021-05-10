@@ -5111,21 +5111,23 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 		var err error
 		var findHash *chainhash.Hash
 		var foundTx *btcutil.Tx
-		findHash, err = chainhash.NewHash(req.Txid)
+		findHashStr := hex.EncodeToString(req.Txid[:])
+		err = chainhash.Decode(findHash, findHashStr)
 		if err == nil {
 			if foundTx, err = r.server.cc.ChainIO.GetTransaction(findHash); err == nil && foundTx != nil {
 				rpcsLog.Error(errors.New(fmt.Sprintf("Found Tx: %+v", foundTx)))
 				msgTx := foundTx.MsgTx()
 				buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSizeStripped()))
-				if msgTx.SerializeNoWitness(buf) == nil {
+				if err = msgTx.SerializeNoWitness(buf); err == nil {
 					foundTxDetail := lnwallet.TransactionDetail{
 						Hash: *findHash,
 						Label: "mempool",
 						RawTx: buf.Bytes(),
 				    }
 					txDetails = append(txDetails, &foundTxDetail)
+				} else {
+					rpcsLog.Error(err)
 				}
-
 			} else if err != nil {
 				rpcsLog.Error(err)
 			}
