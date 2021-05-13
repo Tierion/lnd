@@ -5113,30 +5113,36 @@ func (r *rpcServer) GetTransactions(ctx context.Context,
 	if req.NumConfirmations == 0 && len(req.Txid) != 0 && !foundTx {
 		var err error
 		var findHash *chainhash.Hash
-		var foundTx *btcutil.Tx
 		findHashStr := hex.EncodeToString(req.Txid[:])
 		findHash, err = chainhash.NewHashFromStr(findHashStr)
+		ch := make(chan btcutil.Tx, 1)
 		if err == nil {
-			if foundTx, err = r.server.cc.ChainIO.GetTransaction(findHash); err == nil && foundTx != nil {
-				rpcsLog.Error(errors.New(fmt.Sprintf("Found Tx: %+v", foundTx)))
-				msgTx := foundTx.MsgTx()
-				buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSizeStripped()))
-				if err = msgTx.SerializeNoWitness(buf); err == nil {
-					foundTxDetail := lnwallet.TransactionDetail{
-						Hash: *findHash,
-						Label: "mempool",
-						RawTx: buf.Bytes(),
-				    }
-					txDetails = append(txDetails, &foundTxDetail)
-				} else {
+			go func() {
+				mempoolTx, err := r.server.cc.ChainIO.GetTransaction(findHash)
+				if err == nil && mempoolTx != nil {
+					ch <- *mempoolTx
+				} else if err != nil {
 					rpcsLog.Error(err)
 				}
-			} else if err != nil {
-				rpcsLog.Error(err)
+			}()
+			select {
+				case resultTx := <-ch:
+					rpcsLog.Error(errors.New(fmt.Sprintf("Found Tx: %+v", resultTx)))
+					msgTx := resultTx.MsgTx()
+					buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSizeStripped()))
+					if err = msgTx.SerializeNoWitness(buf); err == nil {
+						foundTxDetail := lnwallet.TransactionDetail{
+							Hash:  *findHash,
+							Label: "mempool",
+							RawTx: buf.Bytes(),
+						}
+						txDetails = append(txDetails, &foundTxDetail)
+					}
+				case <-time.After(5 * time.Second):
+					rpcsLog.Error(errors.New(fmt.Sprintf("timeout looking for mempool tx %s", hex.EncodeToString(req.Txid))))
 			}
-		} 
+		}
 	}
-
 	return lnrpc.RPCTransactionDetails(txDetails), nil
 }
 
